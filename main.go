@@ -15,12 +15,17 @@ import (
 // Login to GH and get the Issue.
 // Then login to jira and create a new issue (attach to an epic if supplied)
 //
+
+// Needs a --dryrun flag which will print out what jira issue it will create
+
+// gh2jira list operator-framework operator-sdk
+// gh2jira copy GH# [--dry-run]
 func main() {
 	GetGithubIssues()
-	CreateJiraIssue()
+	CreateJiraIssue(nil)
 }
 
-func CreateJiraIssue() {
+func CreateJiraIssue(issue *github.Issue) {
 }
 
 func GetGithubIssues() {
