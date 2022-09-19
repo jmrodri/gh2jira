@@ -1,4 +1,4 @@
-module github.com/jmrodri/ghjira
+module github.com/jmrodri/gh2jira
 
 go 1.19
 
