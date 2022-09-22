@@ -22,11 +22,16 @@ import (
 // gh2jira list --project operator-framework/operator-sdk [--milestone=] [--assignee=]
 // gh2jira copy GH# [--dry-run]
 
-func PrintGithubIssue(issue *github.Issue, oneline bool) {
+func PrintGithubIssue(issue *github.Issue, oneline bool, nocolor bool) {
 
 	if oneline {
-		// print the idea in yellow, then reset the rest of the line
-		fmt.Printf("\033[33m%5d\033[0m \033[32m%s\033[0m %s\n", issue.GetNumber(), issue.GetState(), issue.GetTitle())
+		if nocolor {
+			// print the idea in yellow, then reset the rest of the line
+			fmt.Printf("%5d %s %s\n", issue.GetNumber(), issue.GetState(), issue.GetTitle())
+		} else {
+			// print the idea in yellow, then reset the rest of the line
+			fmt.Printf("\033[33m%5d\033[0m \033[32m%s\033[0m %s\n", issue.GetNumber(), issue.GetState(), issue.GetTitle())
+		}
 	} else {
 		// fmt.Println(*issue.ID)
 		fmt.Printf("Issue:\t%d\n", issue.GetNumber())
