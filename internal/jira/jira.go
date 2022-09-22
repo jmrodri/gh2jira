@@ -2,7 +2,10 @@ package jira
 
 import (
 	"fmt"
+	"os"
 
+	"github.com/andygrunwald/go-jira"
+	gojira "github.com/andygrunwald/go-jira"
 	"github.com/google/go-github/v47/github"
 )
 
@@ -36,52 +39,65 @@ import (
 //     }
 // }
 
+func getToken() string {
+	token, ok := os.LookupEnv("JIRA_TOKEN")
+	if !ok {
+		fmt.Println("please supply your JIRA_TOKEN")
+		os.Exit(1)
+	}
+	return token
+}
+
 func CloneIssueToJira(issue *github.Issue, dryRun bool) {
+	token := getToken()
+
+	tp := gojira.BearerAuthTransport{
+		Token: token,
+	}
+
+	// tp := gojira.BasicAuthTransport{
+	//     Username: "username",
+	//     Password: "token",
+	// }
+
+	jiraClient, err := gojira.NewClient(tp.Client(), "https://issues.redhat.com")
+	if err != nil {
+		panic(err)
+	}
+
+	ji := jira.Issue{
+		Fields: &gojira.IssueFields{
+			// Assignee: &gojira.User{
+			//     Name: "myuser",
+			// },
+			// Reporter: &gojira.User{
+			//     Name: "youruser",
+			// },
+			Description: fmt.Sprintf("%s\n\nUpstream Github issue: %s\n", issue.GetBody(), issue.GetURL()),
+			Type: gojira.IssueType{
+				Name: "Story",
+			},
+			Project: gojira.Project{
+				Key: "OSDK",
+			},
+			Summary: issue.GetTitle(),
+		},
+	}
+
 	if dryRun {
 		fmt.Printf("dryrun: Cloning %d to jira\n", issue.GetNumber())
+		fmt.Printf("%#v\n", &ji)
+		fmt.Println(ji.Fields.Summary)
+		fmt.Println(ji.Fields.Description)
 	} else {
 		fmt.Printf("FORREALZ! Cloning %d to jira\n", issue.GetNumber())
+		daIssue, _, err := jiraClient.Issue.Create(&ji)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(2)
+		}
+		// TODO there's a nil pointer from this call
+		fmt.Printf("%s: %+v\n", daIssue.Key, daIssue.Fields.Summary)
 	}
-	// token, ok := os.LookupEnv("GITHUB_TOKEN")
-	// if !ok {
-	//     fmt.Println("please supply your GITHUB_TOKEN")
-	//     os.Exit(1)
-	// }
-	// ctx := context.Background()
-	// ts := oauth2.StaticTokenSource(
-	//     &oauth2.Token{AccessToken: token},
-	// )
-	// tc := oauth2.NewClient(ctx, ts)
-	//
-	// client := github.NewClient(tc)
-	//
-	// opt := &github.IssueListByRepoOptions{
-	//     ListOptions: github.ListOptions{PerPage: 50},
-	//     State:       "open",
-	// }
-	//
-	// var allIssues []*github.Issue
-	//
-	// for {
-	//     issues, resp, err := client.Issues.ListByRepo(context.Background(), "operator-framework", "operator-sdk", opt)
-	//     if err != nil {
-	//         fmt.Println(err.Error())
-	//     }
-	//     // fmt.Println(len(issues))
-	//
-	//     allIssues = append(allIssues, issues...)
-	//     if resp.NextPage == 0 {
-	//         break
-	//     }
-	//     opt.Page = resp.NextPage
-	// }
-	//
-	// // fmt.Println(len(allIssues))
-	// for _, issue := range allIssues {
-	//     if issue.IsPullRequest() {
-	//         // We have a PR, skipping
-	//         continue
-	//     }
-	//     PrintGithubIssue(issue, true, true)
-	// }
+
 }
