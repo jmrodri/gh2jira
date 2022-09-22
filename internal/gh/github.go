@@ -22,23 +22,30 @@ import (
 // gh2jira list --project operator-framework/operator-sdk [--milestone=] [--assignee=]
 // gh2jira copy GH# [--dry-run]
 
-func PrintGithubIssue(issue *github.Issue) {
-	fmt.Println("--------------------------------------------------------------------------------")
-	// fmt.Println(*issue.ID)
-	fmt.Printf("Issue #:\t%d\n", issue.GetNumber())
-	// fmt.Println(*issue.Title)
-	fmt.Printf("State:\t%s\n", issue.GetState())
-	if issue.GetAssignee() != nil {
-		fmt.Printf("Assignee:\t%s\n", *issue.GetAssignee().Login)
+func PrintGithubIssue(issue *github.Issue, oneline bool) {
+
+	if oneline {
+		// print the idea in yellow, then reset the rest of the line
+		fmt.Printf("\033[33m%5d\033[0m \033[32m%s\033[0m %s\n", issue.GetNumber(), issue.GetState(), issue.GetTitle())
+	} else {
+		// fmt.Println(*issue.ID)
+		fmt.Printf("Issue:\t%d\n", issue.GetNumber())
+		// fmt.Println(*issue.Title)
+		fmt.Printf("State:\t%s\n", issue.GetState())
+		if issue.GetAssignee() != nil {
+			fmt.Printf("Assignee:\t%s\n", *issue.GetAssignee().Login)
+		}
+
+		// NOTE: This should be the jira body
+		// fmt.Printf("Title:\t%s\n", issue.GetTitle())
+		fmt.Printf("\n   %s\n\n", issue.GetTitle())
+		// fmt.Printf("Body:\n\t%s\n", issue.GetBody())
+
+		// Look through the labels
+		// important soon should be Urgent
+		// important long term should be Medium
+		// fmt.Println(issue.Labels)
 	}
-
-	// NOTE: This should be the jira body
-	fmt.Printf("Body:\n\t%s\n", issue.GetBody())
-
-	// Look through the labels
-	// important soon should be Urgent
-	// important long term should be Medium
-	// fmt.Println(issue.Labels)
 }
 
 func GetGithubIssues() {
@@ -82,6 +89,6 @@ func GetGithubIssues() {
 			// We have a PR, skipping
 			continue
 		}
-		PrintGithubIssue(issue)
+		PrintGithubIssue(issue, true)
 	}
 }

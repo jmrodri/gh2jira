@@ -20,7 +20,7 @@ import (
 // gh2jira copy GH# [--dry-run]
 func main() {
 	gh.GetGithubIssues()
-	CreateJiraIssue(nil)
+	// CreateJiraIssue(nil)
 }
 
 func CreateJiraIssue(issue *github.Issue) {
