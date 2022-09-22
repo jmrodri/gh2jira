@@ -3,6 +3,7 @@ package jira
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/andygrunwald/go-jira"
 	gojira "github.com/andygrunwald/go-jira"
@@ -48,6 +49,15 @@ func getToken() string {
 	return token
 }
 
+func getWebURL(url string) string {
+	// https://api.github.com/repos/operator-framework/operator-sdk/issues/3447
+	// https://github.com/operator-framework/operator-sdk/issues/3447
+	if url == "" {
+		return url
+	}
+	return strings.Replace(strings.Replace(url, "api.github.com", "github.com", 1), "repos/", "", 1)
+}
+
 func CloneIssueToJira(issue *github.Issue, dryRun bool) {
 	token := getToken()
 
@@ -73,7 +83,7 @@ func CloneIssueToJira(issue *github.Issue, dryRun bool) {
 			// Reporter: &gojira.User{
 			//     Name: "youruser",
 			// },
-			Description: fmt.Sprintf("%s\n\nUpstream Github issue: %s\n", issue.GetBody(), issue.GetURL()),
+			Description: fmt.Sprintf("%s\n\nUpstream Github issue: %s\n", issue.GetBody(), getWebURL(issue.GetURL())),
 			Type: gojira.IssueType{
 				Name: "Story",
 			},
