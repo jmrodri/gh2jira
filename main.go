@@ -3,10 +3,10 @@ package main
 import (
 	"fmt"
 	"os"
-
-	"github.com/google/go-github/v47/github"
+	"strconv"
 
 	"github.com/jmrodri/gh2jira/internal/gh"
+	"github.com/jmrodri/gh2jira/internal/jira"
 )
 
 // So we will want to allow this to be able to take in a specific GH issue id or
@@ -34,14 +34,23 @@ func main() {
 
 	switch command {
 	case "list":
-		gh.GetGithubIssues()
+		// Pass in options to the List command
+		gh.ListIssues()
 	case "clone":
-		fmt.Println("clone command is TBD")
+		// Need github issue number
+		if len(os.Args) < 3 {
+			fmt.Println("Usage: clone ISSUE_TO_CLONE")
+			os.Exit(1)
+		}
+		issueNum, _ := strconv.Atoi(os.Args[2])
+		issue := gh.GetIssue(issueNum)
+
+		var dryRun bool
+		if len(os.Args) > 3 {
+			dryRun = os.Args[3] == "--dryrun"
+		}
+		jira.CloneIssueToJira(issue, dryRun)
 	default:
 		fmt.Printf("Unsupported command: %s\n", command)
 	}
-	// CreateJiraIssue(nil)
-}
-
-func CreateJiraIssue(issue *github.Issue) {
 }

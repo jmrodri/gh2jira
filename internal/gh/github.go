@@ -52,12 +52,34 @@ func PrintGithubIssue(issue *github.Issue, oneline bool, color bool) {
 	}
 }
 
-func GetGithubIssues() {
+func GetIssue(issueNum int) *github.Issue {
+	token := getToken()
+	ctx := context.Background()
+	ts := oauth2.StaticTokenSource(
+		&oauth2.Token{AccessToken: token},
+	)
+	tc := oauth2.NewClient(ctx, ts)
+
+	client := github.NewClient(tc)
+
+	issue, _, err := client.Issues.Get(context.Background(), "operator-framework", "operator-sdk", issueNum)
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	return issue
+}
+
+func getToken() string {
 	token, ok := os.LookupEnv("GITHUB_TOKEN")
 	if !ok {
 		fmt.Println("please supply your GITHUB_TOKEN")
 		os.Exit(1)
 	}
+	return token
+}
+
+func ListIssues() {
+	token := getToken()
 	ctx := context.Background()
 	ts := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: token},
