@@ -1,6 +1,9 @@
 package main
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/google/go-github/v47/github"
 
 	"github.com/jmrodri/gh2jira/internal/gh"
@@ -15,11 +18,28 @@ import (
 
 // Needs a --dryrun flag which will print out what jira issue it will create
 
+// global flags
+// --no-color
+// --oneline
 // gh2jira genconfig
 // gh2jira list --project operator-framework/operator-sdk [--milestone=] [--assignee=]
-// gh2jira copy GH# [--dry-run]
+// gh2jira clone GH# [--dry-run]
 func main() {
-	gh.GetGithubIssues()
+	if len(os.Args) < 2 {
+		fmt.Println("Usage: list or clone")
+		os.Exit(1)
+	}
+
+	command := os.Args[1]
+
+	switch command {
+	case "list":
+		gh.GetGithubIssues()
+	case "clone":
+		fmt.Println("clone command is TBD")
+	default:
+		fmt.Printf("Unsupported command: %s\n", command)
+	}
 	// CreateJiraIssue(nil)
 }
 
