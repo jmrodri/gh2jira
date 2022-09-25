@@ -1,7 +1,6 @@
 package clone
 
 import (
-	"fmt"
 	"strconv"
 
 	"github.com/spf13/cobra"
@@ -22,9 +21,6 @@ func NewCmd() *cobra.Command {
 		Long:  "Clone given Github issues to Jira",
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			fmt.Println("clone called")
-			fmt.Println(args)
-
 			for _, id := range args {
 				issueId, _ := strconv.Atoi(id)
 				issue := lister.GetIssue(issueId)

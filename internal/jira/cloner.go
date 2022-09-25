@@ -73,15 +73,18 @@ func (c *Cloner) Clone(issue *github.Issue, dryRun bool) {
 			Project: gojira.Project{
 				Key: "OSDK",
 			},
-			Summary: issue.GetTitle(),
+			Summary: fmt.Sprintf("[UPSTREAM] %s #%d", issue.GetTitle(), issue.GetNumber()),
 		},
 	}
 
 	if dryRun {
-		fmt.Printf("dryrun: Cloning %d to jira\n", issue.GetNumber())
-		fmt.Printf("%#v\n", &ji)
-		fmt.Println(ji.Fields.Summary)
-		fmt.Println(ji.Fields.Description)
+		fmt.Println("\n############# DRY RUN MODE #############")
+		fmt.Printf("Cloning issue #%d to jira project board: %s\n\n", issue.GetNumber(), ji.Fields.Project.Key)
+		fmt.Printf("Summary: %s\n", ji.Fields.Summary)
+		fmt.Printf("Type: %s\n", ji.Fields.Type.Name)
+		fmt.Println("Description:")
+		fmt.Printf("%s\n", ji.Fields.Description)
+		fmt.Println("\n############# DRY RUN MODE #############")
 	} else {
 		fmt.Printf("FORREALZ! Cloning %d to jira\n", issue.GetNumber())
 		daIssue, _, err := jiraClient.Issue.Create(&ji)
