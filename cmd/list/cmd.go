@@ -23,7 +23,7 @@ func NewCmd() *cobra.Command {
 
 	cmd.Flags().StringVar(&lo.Milestone, "milestone", "", "milestone")
 	cmd.Flags().StringVar(&lo.Assignee, "assignee", "", "assignee")
-	cmd.Flags().StringVar(&lo.Label, "label", "", "label")
+	cmd.Flags().StringSliceVar(&lo.Label, "label", nil, "label")
 
 	return cmd
 }

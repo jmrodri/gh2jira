@@ -27,7 +27,7 @@ import (
 type ListerOptions struct {
 	Milestone string
 	Assignee  string
-	Label     string
+	Label     []string
 }
 
 type Lister struct {
@@ -106,12 +106,6 @@ func getToken() string {
 	return token
 }
 
-func getLabels(l string) []string {
-	labels := []string{}
-	labels = append(labels, l)
-	return labels
-}
-
 func (l *Lister) ListIssues() {
 	if l.Options != nil {
 		fmt.Printf("%+v\n", l.Options)
@@ -133,7 +127,7 @@ func (l *Lister) ListIssues() {
 		State:       "open",
 		Milestone:   l.Options.Milestone,
 		Assignee:    l.Options.Assignee,
-		Labels:      getLabels(l.Options.Label),
+		Labels:      l.Options.Label,
 	}
 
 	var allIssues []*github.Issue
