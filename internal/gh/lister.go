@@ -136,7 +136,6 @@ func (l *Lister) ListIssues() {
 		if err != nil {
 			fmt.Println(err.Error())
 		}
-		// fmt.Println(len(issues))
 
 		allIssues = append(allIssues, issues...)
 		if resp.NextPage == 0 {
@@ -145,7 +144,6 @@ func (l *Lister) ListIssues() {
 		opt.Page = resp.NextPage
 	}
 
-	// fmt.Println(len(allIssues))
 	for _, issue := range allIssues {
 		if issue.IsPullRequest() {
 			// We have a PR, skipping
