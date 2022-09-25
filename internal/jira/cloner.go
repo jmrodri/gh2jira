@@ -86,13 +86,16 @@ func (c *Cloner) Clone(issue *github.Issue, dryRun bool) {
 		fmt.Printf("%s\n", ji.Fields.Description)
 		fmt.Println("\n############# DRY RUN MODE #############")
 	} else {
-		fmt.Printf("FORREALZ! Cloning %d to jira\n", issue.GetNumber())
+		fmt.Printf("Cloning issue #%d to jira project board: %s\n\n", issue.GetNumber(), ji.Fields.Project.Key)
 		daIssue, _, err := jiraClient.Issue.Create(&ji)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(2)
 		}
-		// TODO there's a nil pointer from this call
-		fmt.Printf("%s: %+v\n", daIssue.Key, daIssue.Fields.Summary)
+
+		if daIssue != nil {
+			fmt.Printf("Issue cloned; see %s\n",
+				fmt.Sprintf("https://issues.redhat.com/browse/%s", daIssue.Key))
+		}
 	}
 }

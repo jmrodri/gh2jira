@@ -30,7 +30,7 @@ func NewCmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().BoolVar(&dryRun, "dryrun", true, "display what we would do without cloning")
+	cmd.Flags().BoolVar(&dryRun, "dryrun", false, "display what we would do without cloning")
 
 	return cmd
 }
