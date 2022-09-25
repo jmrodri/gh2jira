@@ -31,6 +31,7 @@ type ListerOptions struct {
 }
 
 type Lister struct {
+	Options *ListerOptions
 }
 
 // So we will want to allow this to be able to take in a specific GH issue id or
@@ -47,6 +48,9 @@ type Lister struct {
 // gh2jira copy GH# [--dry-run]
 
 func PrintGithubIssue(issue *github.Issue, oneline bool, color bool) {
+
+	// fmt.Printf("%5d %s %+v\n", issue.GetNumber(), issue.GetTitle(), issue.GetMilestone())
+	// return
 
 	if oneline {
 		if color {
@@ -102,7 +106,19 @@ func getToken() string {
 	return token
 }
 
+func getLabels(l string) []string {
+	labels := []string{}
+	labels = append(labels, l)
+	return labels
+}
+
 func (l *Lister) ListIssues() {
+	if l.Options != nil {
+		fmt.Printf("%+v\n", l.Options)
+	} else {
+		fmt.Println("XXX NO OPTIONS!")
+	}
+
 	token := getToken()
 	ctx := context.Background()
 	ts := oauth2.StaticTokenSource(
@@ -115,6 +131,9 @@ func (l *Lister) ListIssues() {
 	opt := &github.IssueListByRepoOptions{
 		ListOptions: github.ListOptions{PerPage: 50},
 		State:       "open",
+		Milestone:   l.Options.Milestone,
+		Assignee:    l.Options.Assignee,
+		Labels:      getLabels(l.Options.Label),
 	}
 
 	var allIssues []*github.Issue
