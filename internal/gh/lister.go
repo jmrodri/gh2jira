@@ -107,10 +107,9 @@ func getToken() string {
 }
 
 func (l *Lister) ListIssues() {
-	if l.Options != nil {
-		fmt.Printf("%+v\n", l.Options)
-	} else {
-		fmt.Println("XXX NO OPTIONS!")
+	// If no options, at least make it non-nil to avoid any issues later.
+	if l.Options == nil {
+		l.Options = &ListerOptions{}
 	}
 
 	token := getToken()
