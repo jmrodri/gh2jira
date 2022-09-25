@@ -21,9 +21,9 @@ func NewCmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&lo.Milestone, "milestone", "", "milestone")
-	cmd.Flags().StringVar(&lo.Assignee, "assignee", "", "assignee")
-	cmd.Flags().StringSliceVar(&lo.Label, "label", nil, "label")
+	cmd.Flags().StringVar(&lo.Milestone, "milestone", "", "the milestone ID from the url, not the display name")
+	cmd.Flags().StringVar(&lo.Assignee, "assignee", "", "username of the issue is assigned")
+	cmd.Flags().StringSliceVar(&lo.Label, "label", nil, "label i.e. --label \"documentation,bug\" or --label doc --label bug")
 
 	return cmd
 }
