@@ -24,6 +24,15 @@ import (
 	"golang.org/x/oauth2"
 )
 
+type ListerOptions struct {
+	Milestone string
+	Assignee  string
+	Label     string
+}
+
+type Lister struct {
+}
+
 // So we will want to allow this to be able to take in a specific GH issue id or
 // --all.
 
@@ -67,7 +76,7 @@ func PrintGithubIssue(issue *github.Issue, oneline bool, color bool) {
 	}
 }
 
-func GetIssue(issueNum int) *github.Issue {
+func (l *Lister) GetIssue(issueNum int) *github.Issue {
 	token := getToken()
 	ctx := context.Background()
 	ts := oauth2.StaticTokenSource(
@@ -93,7 +102,7 @@ func getToken() string {
 	return token
 }
 
-func ListIssues() {
+func (l *Lister) ListIssues() {
 	token := getToken()
 	ctx := context.Background()
 	ts := oauth2.StaticTokenSource(
