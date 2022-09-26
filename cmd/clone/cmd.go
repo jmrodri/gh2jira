@@ -18,7 +18,7 @@ func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "clone <ISSUE_ID> [ISSUE_ID ...]",
 		Short: "Clone given Github issues to Jira",
-		Long:  "Clone given Github issues to Jira",
+		Long:  "Clone given Github issues to Jira. WARNING! This will write to your jira instance. Use --dryrun to see what will happen",
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			for _, id := range args {
