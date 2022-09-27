@@ -90,6 +90,13 @@ func WithProject(p string) Option {
 	}
 }
 
+func WithLabel(l []string) Option {
+	return func(c *ListerConfig) error {
+		c.Label = l
+		return nil
+	}
+}
+
 func (c *ListerConfig) getToken() (string, error) {
 	token, ok := os.LookupEnv("GITHUB_TOKEN")
 	if !ok {

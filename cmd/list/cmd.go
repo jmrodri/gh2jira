@@ -15,34 +15,42 @@
 package list
 
 import (
-	"github.com/jmrodri/gh2jira/internal/gh"
 	"github.com/spf13/cobra"
+
+	"github.com/jmrodri/gh2jira/internal/gh"
+)
+
+var (
+	milestone string
+	assignee  string
+	project   string
+	label     []string
 )
 
 func NewCmd() *cobra.Command {
-	lo := gh.ListerOptions{}
-	lister := gh.Lister{
-		Options: &lo,
-	}
-
 	cmd := &cobra.Command{
 		Use:   "list",
 		Short: "List Github issues",
 		Long:  "List Github issues filtered by milestone, assignee, or label",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := lister.ListIssues(); err != nil {
+			err := gh.ListIssues(gh.WithMilestone(milestone),
+				gh.WithAssignee(assignee),
+				gh.WithProject(project),
+				gh.WithLabel(label),
+			)
+			if err != nil {
 				return err
 			}
 			return nil
 		},
 	}
 
-	cmd.Flags().StringVar(&lo.Milestone, "milestone", "",
+	cmd.Flags().StringVar(&milestone, "milestone", "",
 		"the milestone ID from the url, not the display name")
-	cmd.Flags().StringVar(&lo.Assignee, "assignee", "", "username of the issue is assigned")
-	cmd.Flags().StringVar(&lo.Project, "project", "operator-framework/operator-sdk",
+	cmd.Flags().StringVar(&assignee, "assignee", "", "username of the issue is assigned")
+	cmd.Flags().StringVar(&project, "project", "operator-framework/operator-sdk",
 		"Github project to list e.g. ORG/REPO")
-	cmd.Flags().StringSliceVar(&lo.Label, "label", nil,
+	cmd.Flags().StringSliceVar(&label, "label", nil,
 		"label i.e. --label \"documentation,bug\" or --label doc --label bug")
 
 	return cmd
