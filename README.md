@@ -1,5 +1,17 @@
 # gh2jira
 
+Build Status:
+[![Build Status][actions-img]](https://github.com/jmrodri/gh2jira/actions)
+
+License:
+[![License](http://img.shields.io/:license-apache-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0.html)
+
+
+Code coverage:
+[![coveralls][coveralls-img]](https://coveralls.io/r/jmrodri/gh2jira?branch=main)
+[![codecov][codecov-img]](http://codecov.io/github/jmrodri/gh2jira?branch=main)
+
+
 A utility that allows you to copy a Github issue to Jira
 
 ## Usage
@@ -75,3 +87,7 @@ Flags:
   -h, --help                    help for clone
       --project string          Jira project to clone to (default "OSDK")
 ```
+
+[actions-img]: https://github.com/jmrodri/gh2jira/workflows/unit/badge.svg
+[coveralls-img]: https://img.shields.io/coveralls/c/github/jmrodri/gh2jira/main.svg?label=coveralls
+[codecov-img]: https://img.shields.io/codecov/c/github/jmrodri/gh2jira/main.svg?label=codecov
