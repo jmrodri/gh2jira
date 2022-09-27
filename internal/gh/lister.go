@@ -111,7 +111,7 @@ func (l *Lister) GetIssue(issueNum int) (*github.Issue, error) {
 		l.Options.GetGithubRepo(), issueNum)
 
 	if err != nil {
-		fmt.Println(err.Error())
+		return nil, err
 	}
 	return issue, nil
 }
@@ -158,7 +158,7 @@ func (l *Lister) ListIssues() error {
 			l.Options.GetGithubOrg(), l.Options.GetGithubRepo(), opt)
 
 		if err != nil {
-			fmt.Println(err.Error())
+			return err
 		}
 
 		allIssues = append(allIssues, issues...)

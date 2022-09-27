@@ -101,4 +101,40 @@ var _ = Describe("Lister", func() {
 			Expect(token).To(Equal(""))
 		})
 	})
+
+	Context("Lister", func() {
+		Describe("ListIssues", func() {
+			var (
+				originalToken string
+				lister        *Lister
+			)
+			BeforeEach(func() {
+				lister = &Lister{}
+				originalToken = os.Getenv("GITHUB_TOKEN")
+				err := os.Setenv("GITHUB_TOKEN", "blah-blah-blah")
+				Expect(err).NotTo(HaveOccurred())
+			})
+			AfterEach(func() {
+				err := os.Setenv("GITHUB_TOKEN", originalToken)
+				Expect(err).NotTo(HaveOccurred())
+			})
+			It("should return an error if there is no token", func() {
+				err := os.Unsetenv("GITHUB_TOKEN")
+				Expect(err).NotTo(HaveOccurred())
+
+				err = lister.ListIssues()
+				Expect(err).To(HaveOccurred())
+			})
+			It("should initialize ListerOption if not set", func() {
+				// force ListIssue to return early
+				err := os.Unsetenv("GITHUB_TOKEN")
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(lister.Options).To(BeNil())
+				err = lister.ListIssues()
+				Expect(err).To(HaveOccurred())
+				Expect(lister.Options).NotTo(BeNil())
+			})
+		})
+	})
 })
