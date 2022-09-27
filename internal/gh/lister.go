@@ -25,27 +25,77 @@ import (
 	"golang.org/x/oauth2"
 )
 
-type ListerOptions struct {
+type Option func(*ListerConfig) error
+
+type ListerConfig struct {
+	client    *http.Client
 	Milestone string
 	Assignee  string
 	Project   string
 	Label     []string
 }
 
-type Lister struct {
-	Options *ListerOptions
+func (c *ListerConfig) setDefaults() error {
+	if c.client == nil {
+		ctx := context.Background()
+		token, err := c.getToken()
+		if err != nil {
+			return err
+		}
+		ts := oauth2.StaticTokenSource(
+			&oauth2.Token{AccessToken: token},
+		)
+		c.client = oauth2.NewClient(ctx, ts)
+	}
+	return nil
 }
 
-func (l *ListerOptions) GetGithubOrg() string {
+func (l *ListerConfig) GetGithubOrg() string {
 	return strings.Split(l.Project, "/")[0]
 }
 
-func (l *ListerOptions) GetGithubRepo() string {
+func (l *ListerConfig) GetGithubRepo() string {
 	s := strings.Split(l.Project, "/")
 	if len(s) == 1 {
 		return s[0]
 	}
 	return s[1]
+}
+
+func WithClient(cl *http.Client) Option {
+	return func(c *ListerConfig) error {
+		c.client = cl
+		return nil
+	}
+}
+
+func WithMilestone(m string) Option {
+	return func(c *ListerConfig) error {
+		c.Milestone = m
+		return nil
+	}
+}
+
+func WithAssignee(a string) Option {
+	return func(c *ListerConfig) error {
+		c.Assignee = a
+		return nil
+	}
+}
+
+func WithProject(p string) Option {
+	return func(c *ListerConfig) error {
+		c.Project = p
+		return nil
+	}
+}
+
+func (c *ListerConfig) getToken() (string, error) {
+	token, ok := os.LookupEnv("GITHUB_TOKEN")
+	if !ok {
+		return "", fmt.Errorf("please supply your GITHUB_TOKEN")
+	}
+	return token, nil
 }
 
 // So we will want to allow this to be able to take in a specific GH issue id or
@@ -94,22 +144,22 @@ func PrintGithubIssue(issue *github.Issue, oneline bool, color bool) {
 	}
 }
 
-func (l *Lister) GetIssue(issueNum int) (*github.Issue, error) {
-	token, err := getToken()
-	if err != nil {
+func GetIssue(issueNum int, opts ...Option) (*github.Issue, error) {
+	config := ListerConfig{}
+	for _, opt := range opts {
+		if err := opt(&config); err != nil {
+			return nil, err
+		}
+	}
+
+	if err := config.setDefaults(); err != nil {
 		return nil, err
 	}
 
-	ctx := context.Background()
-	ts := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: token},
-	)
-	tc := oauth2.NewClient(ctx, ts)
+	client := github.NewClient(config.client)
 
-	client := github.NewClient(tc)
-
-	issue, _, err := client.Issues.Get(context.Background(), l.Options.GetGithubOrg(),
-		l.Options.GetGithubRepo(), issueNum)
+	issue, _, err := client.Issues.Get(context.Background(), config.GetGithubOrg(),
+		config.GetGithubRepo(), issueNum)
 
 	if err != nil {
 		return nil, err
@@ -117,63 +167,8 @@ func (l *Lister) GetIssue(issueNum int) (*github.Issue, error) {
 	return issue, nil
 }
 
-func getToken() (string, error) {
-	token, ok := os.LookupEnv("GITHUB_TOKEN")
-	if !ok {
-		return "", fmt.Errorf("please supply your GITHUB_TOKEN")
-	}
-	return token, nil
-}
-
-// Make it testable
-var readHttpClient = getHttpClient
-
-func getHttpClient() *http.Client {
-	return nil
-}
-
-// OR maybe use options
-
-type Option func(*ClientConfig) error
-
-type ClientConfig struct {
-	client *http.Client
-}
-
-func (c *ClientConfig) setDefaults() error {
-	if c.client == nil {
-		ctx := context.Background()
-		token, err := getToken()
-		if err != nil {
-			return err
-		}
-		ts := oauth2.StaticTokenSource(
-			&oauth2.Token{AccessToken: token},
-		)
-		c.client = oauth2.NewClient(ctx, ts)
-	}
-	return nil
-}
-
-func WithClient(cl *http.Client) Option {
-	return func(c *ClientConfig) error {
-		c.client = cl
-		return nil
-	}
-}
-
-func (l *Lister) ListIssues(opts ...Option) error {
-	// If no options, at least make it non-nil to avoid any issues later.
-	if l.Options == nil {
-		l.Options = &ListerOptions{}
-	}
-
-	// token, err := getToken()
-	// if err != nil {
-	//     return err
-	// }
-
-	config := ClientConfig{}
+func ListIssues(opts ...Option) error {
+	config := ListerConfig{}
 	for _, opt := range opts {
 		if err := opt(&config); err != nil {
 			return err
@@ -184,27 +179,21 @@ func (l *Lister) ListIssues(opts ...Option) error {
 		return err
 	}
 
-	// ctx := context.Background()
-	// ts := oauth2.StaticTokenSource(
-	//     &oauth2.Token{AccessToken: token},
-	// )
-	// tc := oauth2.NewClient(ctx, ts)
-
 	client := github.NewClient(config.client)
 
 	opt := &github.IssueListByRepoOptions{
 		ListOptions: github.ListOptions{PerPage: 50},
 		State:       "open",
-		Milestone:   l.Options.Milestone,
-		Assignee:    l.Options.Assignee,
-		Labels:      l.Options.Label,
+		Milestone:   config.Milestone,
+		Assignee:    config.Assignee,
+		Labels:      config.Label,
 	}
 
 	var allIssues []*github.Issue
 
 	for {
 		issues, resp, err := client.Issues.ListByRepo(context.Background(),
-			l.Options.GetGithubOrg(), l.Options.GetGithubRepo(), opt)
+			config.GetGithubOrg(), config.GetGithubRepo(), opt)
 
 		if err != nil {
 			return err
