@@ -93,8 +93,12 @@ func PrintGithubIssue(issue *github.Issue, oneline bool, color bool) {
 	}
 }
 
-func (l *Lister) GetIssue(issueNum int) *github.Issue {
-	token := getToken()
+func (l *Lister) GetIssue(issueNum int) (*github.Issue, error) {
+	token, err := getToken()
+	if err != nil {
+		return nil, err
+	}
+
 	ctx := context.Background()
 	ts := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: token},
@@ -109,25 +113,28 @@ func (l *Lister) GetIssue(issueNum int) *github.Issue {
 	if err != nil {
 		fmt.Println(err.Error())
 	}
-	return issue
+	return issue, nil
 }
 
-func getToken() string {
+func getToken() (string, error) {
 	token, ok := os.LookupEnv("GITHUB_TOKEN")
 	if !ok {
-		fmt.Println("please supply your GITHUB_TOKEN")
-		os.Exit(1)
+		return "", fmt.Errorf("please supply your GITHUB_TOKEN")
 	}
-	return token
+	return token, nil
 }
 
-func (l *Lister) ListIssues() {
+func (l *Lister) ListIssues() error {
 	// If no options, at least make it non-nil to avoid any issues later.
 	if l.Options == nil {
 		l.Options = &ListerOptions{}
 	}
 
-	token := getToken()
+	token, err := getToken()
+	if err != nil {
+		return err
+	}
+
 	ctx := context.Background()
 	ts := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: token},
@@ -168,4 +175,6 @@ func (l *Lister) ListIssues() {
 		}
 		PrintGithubIssue(issue, true, true)
 	}
+
+	return nil
 }

@@ -42,7 +42,10 @@ func NewCmd() *cobra.Command {
 				lister.Options = &gh.ListerOptions{
 					Project: ghproject,
 				}
-				issue := lister.GetIssue(issueId)
+				issue, err := lister.GetIssue(issueId)
+				if err != nil {
+					return err
+				}
 				cloner.Clone(issue, project, dryRun)
 			}
 			return nil
