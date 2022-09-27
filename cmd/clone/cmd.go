@@ -10,6 +10,8 @@ import (
 )
 
 var dryRun bool
+var project string
+var ghproject string
 
 func NewCmd() *cobra.Command {
 	cloner := jira.Cloner{}
@@ -23,14 +25,20 @@ func NewCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			for _, id := range args {
 				issueId, _ := strconv.Atoi(id)
+				lister.Options = &gh.ListerOptions{
+					Project: ghproject,
+				}
 				issue := lister.GetIssue(issueId)
-				cloner.Clone(issue, dryRun)
+				cloner.Clone(issue, project, dryRun)
 			}
 			return nil
 		},
 	}
 
 	cmd.Flags().BoolVar(&dryRun, "dryrun", false, "display what we would do without cloning")
+	cmd.Flags().StringVar(&project, "project", "OSDK", "Jira project to clone to")
+	cmd.Flags().StringVar(&ghproject, "github-project", "operator-framework/operator-sdk",
+		"Github project to clone from e.g. ORG/REPO")
 
 	return cmd
 }

@@ -46,7 +46,7 @@ func getWebURL(url string) string {
 	return strings.Replace(strings.Replace(url, "api.github.com", "github.com", 1), "repos/", "", 1)
 }
 
-func (c *Cloner) Clone(issue *github.Issue, dryRun bool) {
+func (c *Cloner) Clone(issue *github.Issue, project string, dryRun bool) {
 	token := getToken()
 
 	tp := gojira.BearerAuthTransport{
@@ -71,7 +71,7 @@ func (c *Cloner) Clone(issue *github.Issue, dryRun bool) {
 				Name: "Story",
 			},
 			Project: gojira.Project{
-				Key: "OSDK",
+				Key: project,
 			},
 			Summary: fmt.Sprintf("[UPSTREAM] %s #%d", issue.GetTitle(), issue.GetNumber()),
 		},
