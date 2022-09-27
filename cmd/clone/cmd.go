@@ -30,8 +30,6 @@ var (
 )
 
 func NewCmd() *cobra.Command {
-	cloner := jira.Cloner{}
-
 	cmd := &cobra.Command{
 		Use:   "clone <ISSUE_ID> [ISSUE_ID ...]",
 		Short: "Clone given Github issues to Jira",
@@ -44,7 +42,10 @@ func NewCmd() *cobra.Command {
 				if err != nil {
 					return err
 				}
-				cloner.Clone(issue, project, dryRun)
+				err = jira.Clone(issue, jira.WithProject(project), jira.WithDryRun(dryRun))
+				if err != nil {
+					return nil
+				}
 			}
 			return nil
 		},
