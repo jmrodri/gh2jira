@@ -19,6 +19,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/google/go-github/v47/github"
 	"golang.org/x/oauth2"
@@ -27,11 +28,24 @@ import (
 type ListerOptions struct {
 	Milestone string
 	Assignee  string
+	Project   string
 	Label     []string
 }
 
 type Lister struct {
 	Options *ListerOptions
+}
+
+func (l *ListerOptions) GetGithubOrg() string {
+	return strings.Split(l.Project, "/")[0]
+}
+
+func (l *ListerOptions) GetGithubRepo() string {
+	s := strings.Split(l.Project, "/")
+	if len(s) == 1 {
+		return s[0]
+	}
+	return s[1]
 }
 
 // So we will want to allow this to be able to take in a specific GH issue id or
@@ -90,7 +104,9 @@ func (l *Lister) GetIssue(issueNum int) *github.Issue {
 
 	client := github.NewClient(tc)
 
-	issue, _, err := client.Issues.Get(context.Background(), "operator-framework", "operator-sdk", issueNum)
+	issue, _, err := client.Issues.Get(context.Background(), l.Options.GetGithubOrg(),
+		l.Options.GetGithubRepo(), issueNum)
+
 	if err != nil {
 		fmt.Println(err.Error())
 	}
@@ -132,7 +148,9 @@ func (l *Lister) ListIssues() {
 	var allIssues []*github.Issue
 
 	for {
-		issues, resp, err := client.Issues.ListByRepo(context.Background(), "operator-framework", "operator-sdk", opt)
+		issues, resp, err := client.Issues.ListByRepo(context.Background(),
+			l.Options.GetGithubOrg(), l.Options.GetGithubRepo(), opt)
+
 		if err != nil {
 			fmt.Println(err.Error())
 		}
