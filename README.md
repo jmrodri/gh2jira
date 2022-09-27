@@ -1,10 +1,10 @@
 # gh2jira
 
-<!-- Build Status: -->
+Build Status:
 [![Build Status][actions-img]](https://github.com/jmrodri/gh2jira/actions)
-<!-- License: -->
+License:
 [![License](http://img.shields.io/:license-apache-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0.html)
-<!-- Code coverage: -->
+Code coverage:
 [![coveralls][coveralls-img]](https://coveralls.io/github/jmrodri/gh2jira?branch=main)
 
 A utility that allows you to copy a Github issue to Jira
