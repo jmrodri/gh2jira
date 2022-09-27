@@ -51,6 +51,7 @@ Flags:
   -h, --help               help for list
       --label strings      label i.e. --label "documentation,bug" or --label doc --label bug
       --milestone string   the milestone ID from the url, not the display name
+      --project string     Github project to list e.g. ORG/REPO (default "operator-framework/operator-sdk")
 ```
 
 ### `clone` subcommand
@@ -69,6 +70,8 @@ Usage:
   gh2jira clone <ISSUE_ID> [ISSUE_ID ...] [flags]
 
 Flags:
-      --dryrun   display what we would do without cloning
-  -h, --help     help for clone
+      --dryrun                  display what we would do without cloning
+      --github-project string   Github project to clone from e.g. ORG/REPO (default "operator-framework/operator-sdk")
+  -h, --help                    help for clone
+      --project string          Jira project to clone to (default "OSDK")
 ```
