@@ -17,6 +17,7 @@ package gh
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"os"
 	"strings"
 
@@ -124,24 +125,72 @@ func getToken() (string, error) {
 	return token, nil
 }
 
-func (l *Lister) ListIssues() error {
+// Make it testable
+var readHttpClient = getHttpClient
+
+func getHttpClient() *http.Client {
+	return nil
+}
+
+// OR maybe use options
+
+type Option func(*ClientConfig) error
+
+type ClientConfig struct {
+	client *http.Client
+}
+
+func (c *ClientConfig) setDefaults() error {
+	if c.client == nil {
+		ctx := context.Background()
+		token, err := getToken()
+		if err != nil {
+			return err
+		}
+		ts := oauth2.StaticTokenSource(
+			&oauth2.Token{AccessToken: token},
+		)
+		c.client = oauth2.NewClient(ctx, ts)
+	}
+	return nil
+}
+
+func WithClient(cl *http.Client) Option {
+	return func(c *ClientConfig) error {
+		c.client = cl
+		return nil
+	}
+}
+
+func (l *Lister) ListIssues(opts ...Option) error {
 	// If no options, at least make it non-nil to avoid any issues later.
 	if l.Options == nil {
 		l.Options = &ListerOptions{}
 	}
 
-	token, err := getToken()
-	if err != nil {
+	// token, err := getToken()
+	// if err != nil {
+	//     return err
+	// }
+
+	config := ClientConfig{}
+	for _, opt := range opts {
+		if err := opt(&config); err != nil {
+			return err
+		}
+	}
+
+	if err := config.setDefaults(); err != nil {
 		return err
 	}
 
-	ctx := context.Background()
-	ts := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: token},
-	)
-	tc := oauth2.NewClient(ctx, ts)
+	// ctx := context.Background()
+	// ts := oauth2.StaticTokenSource(
+	//     &oauth2.Token{AccessToken: token},
+	// )
+	// tc := oauth2.NewClient(ctx, ts)
 
-	client := github.NewClient(tc)
+	client := github.NewClient(config.client)
 
 	opt := &github.IssueListByRepoOptions{
 		ListOptions: github.ListOptions{PerPage: 50},

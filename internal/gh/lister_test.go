@@ -17,6 +17,7 @@ package gh
 import (
 	"os"
 
+	"github.com/migueleliasweb/go-github-mock/src/mock"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -136,10 +137,10 @@ var _ = Describe("Lister", func() {
 				Expect(lister.Options).NotTo(BeNil())
 			})
 			It("should not return an error", func() {
-				Skip("figure out how to use the mock go github library")
-				Expect(lister.Options).To(BeNil())
-				err := lister.ListIssues()
-				Expect(err).To(HaveOccurred())
+				// Skip("figure out how to use the mock go github library")
+				mockedHTTPClient := mock.NewMockedHTTPClient()
+				err := lister.ListIssues(WithClient(mockedHTTPClient))
+				Expect(err).NotTo(HaveOccurred())
 				Expect(lister.Options).NotTo(BeNil())
 			})
 		})
