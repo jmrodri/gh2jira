@@ -135,6 +135,13 @@ var _ = Describe("Lister", func() {
 				Expect(err).To(HaveOccurred())
 				Expect(lister.Options).NotTo(BeNil())
 			})
+			It("should not return an error", func() {
+				Skip("figure out how to use the mock go github library")
+				Expect(lister.Options).To(BeNil())
+				err := lister.ListIssues()
+				Expect(err).To(HaveOccurred())
+				Expect(lister.Options).NotTo(BeNil())
+			})
 		})
 	})
 })
