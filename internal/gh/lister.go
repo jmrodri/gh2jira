@@ -17,6 +17,7 @@ package gh
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"os"
 	"strings"
 
@@ -24,22 +25,36 @@ import (
 	"golang.org/x/oauth2"
 )
 
-type ListerOptions struct {
+type Option func(*ListerConfig) error
+
+type ListerConfig struct {
+	client    *http.Client
 	Milestone string
 	Assignee  string
 	Project   string
 	Label     []string
 }
 
-type Lister struct {
-	Options *ListerOptions
+func (c *ListerConfig) setDefaults() error {
+	if c.client == nil {
+		ctx := context.Background()
+		token, err := c.getToken()
+		if err != nil {
+			return err
+		}
+		ts := oauth2.StaticTokenSource(
+			&oauth2.Token{AccessToken: token},
+		)
+		c.client = oauth2.NewClient(ctx, ts)
+	}
+	return nil
 }
 
-func (l *ListerOptions) GetGithubOrg() string {
+func (l *ListerConfig) GetGithubOrg() string {
 	return strings.Split(l.Project, "/")[0]
 }
 
-func (l *ListerOptions) GetGithubRepo() string {
+func (l *ListerConfig) GetGithubRepo() string {
 	s := strings.Split(l.Project, "/")
 	if len(s) == 1 {
 		return s[0]
@@ -47,111 +62,102 @@ func (l *ListerOptions) GetGithubRepo() string {
 	return s[1]
 }
 
-// So we will want to allow this to be able to take in a specific GH issue id or
-// --all.
-
-// Login to GH and get the Issue.
-// Then login to jira and create a new issue (attach to an epic if supplied)
-//
-
-// Needs a --dryrun flag which will print out what jira issue it will create
-
-// gh2jira genconfig
-// gh2jira list --project operator-framework/operator-sdk [--milestone=] [--assignee=]
-// gh2jira copy GH# [--dry-run]
-
-func PrintGithubIssue(issue *github.Issue, oneline bool, color bool) {
-
-	// fmt.Printf("%5d %s %+v\n", issue.GetNumber(), issue.GetTitle(), issue.GetMilestone())
-	// return
-
-	if oneline {
-		if color {
-			// print the idea in yellow, then reset the rest of the line
-			fmt.Printf("\033[33m%5d\033[0m \033[32m%s\033[0m %s\n", issue.GetNumber(), issue.GetState(), issue.GetTitle())
-		} else {
-			fmt.Printf("%5d %s %s\n", issue.GetNumber(), issue.GetState(), issue.GetTitle())
-		}
-	} else {
-		// fmt.Println(*issue.ID)
-		fmt.Printf("Issue:\t%d\n", issue.GetNumber())
-		// fmt.Println(*issue.Title)
-		fmt.Printf("State:\t%s\n", issue.GetState())
-		if issue.GetAssignee() != nil {
-			fmt.Printf("Assignee:\t%s\n", *issue.GetAssignee().Login)
-		}
-
-		// NOTE: This should be the jira body
-		// fmt.Printf("Title:\t%s\n", issue.GetTitle())
-		fmt.Printf("\n   %s\n\n", issue.GetTitle())
-		// fmt.Printf("Body:\n\t%s\n", issue.GetBody())
-
-		// Look through the labels
-		// important soon should be Urgent
-		// important long term should be Medium
-		// fmt.Println(issue.Labels)
-	}
-}
-
-func (l *Lister) GetIssue(issueNum int) *github.Issue {
-	token := getToken()
-	ctx := context.Background()
-	ts := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: token},
-	)
-	tc := oauth2.NewClient(ctx, ts)
-
-	client := github.NewClient(tc)
-
-	issue, _, err := client.Issues.Get(context.Background(), l.Options.GetGithubOrg(),
-		l.Options.GetGithubRepo(), issueNum)
-
-	if err != nil {
-		fmt.Println(err.Error())
-	}
-	return issue
-}
-
-func getToken() string {
+func (c *ListerConfig) getToken() (string, error) {
 	token, ok := os.LookupEnv("GITHUB_TOKEN")
 	if !ok {
-		fmt.Println("please supply your GITHUB_TOKEN")
-		os.Exit(1)
+		return "", fmt.Errorf("please supply your GITHUB_TOKEN")
 	}
-	return token
+	return token, nil
 }
 
-func (l *Lister) ListIssues() {
-	// If no options, at least make it non-nil to avoid any issues later.
-	if l.Options == nil {
-		l.Options = &ListerOptions{}
+func WithClient(cl *http.Client) Option {
+	return func(c *ListerConfig) error {
+		c.client = cl
+		return nil
+	}
+}
+
+func WithMilestone(m string) Option {
+	return func(c *ListerConfig) error {
+		c.Milestone = m
+		return nil
+	}
+}
+
+func WithAssignee(a string) Option {
+	return func(c *ListerConfig) error {
+		c.Assignee = a
+		return nil
+	}
+}
+
+func WithProject(p string) Option {
+	return func(c *ListerConfig) error {
+		c.Project = p
+		return nil
+	}
+}
+
+func WithLabel(l []string) Option {
+	return func(c *ListerConfig) error {
+		c.Label = l
+		return nil
+	}
+}
+
+func GetIssue(issueNum int, opts ...Option) (*github.Issue, error) {
+	config := ListerConfig{}
+	for _, opt := range opts {
+		if err := opt(&config); err != nil {
+			return nil, err
+		}
 	}
 
-	token := getToken()
-	ctx := context.Background()
-	ts := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: token},
-	)
-	tc := oauth2.NewClient(ctx, ts)
+	if err := config.setDefaults(); err != nil {
+		return nil, err
+	}
 
-	client := github.NewClient(tc)
+	client := github.NewClient(config.client)
+
+	issue, _, err := client.Issues.Get(context.Background(), config.GetGithubOrg(),
+		config.GetGithubRepo(), issueNum)
+
+	if err != nil {
+		return nil, err
+	}
+	return issue, nil
+}
+
+func ListIssues(opts ...Option) ([]*github.Issue, error) {
+	config := ListerConfig{}
+	for _, opt := range opts {
+		if err := opt(&config); err != nil {
+			return nil, err
+		}
+	}
+
+	if err := config.setDefaults(); err != nil {
+		return nil, err
+	}
+
+	client := github.NewClient(config.client)
 
 	opt := &github.IssueListByRepoOptions{
 		ListOptions: github.ListOptions{PerPage: 50},
 		State:       "open",
-		Milestone:   l.Options.Milestone,
-		Assignee:    l.Options.Assignee,
-		Labels:      l.Options.Label,
+		Milestone:   config.Milestone,
+		Assignee:    config.Assignee,
+		Labels:      config.Label,
 	}
 
 	var allIssues []*github.Issue
 
 	for {
 		issues, resp, err := client.Issues.ListByRepo(context.Background(),
-			l.Options.GetGithubOrg(), l.Options.GetGithubRepo(), opt)
+			config.GetGithubOrg(), config.GetGithubRepo(), opt)
 
 		if err != nil {
-			fmt.Println(err.Error())
+			return nil, err
 		}
 
 		allIssues = append(allIssues, issues...)
@@ -161,11 +167,5 @@ func (l *Lister) ListIssues() {
 		opt.Page = resp.NextPage
 	}
 
-	for _, issue := range allIssues {
-		if issue.IsPullRequest() {
-			// We have a PR, skipping
-			continue
-		}
-		PrintGithubIssue(issue, true, true)
-	}
+	return allIssues, nil
 }

@@ -16,6 +16,7 @@ package jira
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 	"strings"
 
@@ -24,16 +25,67 @@ import (
 	"github.com/google/go-github/v47/github"
 )
 
-type Cloner struct {
+type Option func(*ClonerConfig) error
+
+type ClonerConfig struct {
+	client  *http.Client
+	dryRun  bool
+	project string
+	jiraURL string
 }
 
-func getToken() string {
+func (c *ClonerConfig) setDefaults() error {
+	if c.client == nil {
+		token, err := c.getToken()
+		if err != nil {
+			return err
+		}
+
+		tp := gojira.BearerAuthTransport{
+			Token: token,
+		}
+		c.client = tp.Client()
+	}
+	if c.jiraURL == "" {
+		c.jiraURL = "https://issues.redhat.com"
+	}
+	return nil
+}
+
+func (c *ClonerConfig) getToken() (string, error) {
 	token, ok := os.LookupEnv("JIRA_TOKEN")
 	if !ok {
-		fmt.Println("please supply your JIRA_TOKEN")
-		os.Exit(1)
+		return "", fmt.Errorf("please supply your JIRA_TOKEN")
 	}
-	return token
+	return token, nil
+}
+
+func WithClient(cl *http.Client) Option {
+	return func(c *ClonerConfig) error {
+		c.client = cl
+		return nil
+	}
+}
+
+func WithDryRun(dr bool) Option {
+	return func(c *ClonerConfig) error {
+		c.dryRun = dr
+		return nil
+	}
+}
+
+func WithProject(p string) Option {
+	return func(c *ClonerConfig) error {
+		c.project = p
+		return nil
+	}
+}
+
+func WithJiraURL(j string) Option {
+	return func(c *ClonerConfig) error {
+		c.jiraURL = j
+		return nil
+	}
 }
 
 func getWebURL(url string) string {
@@ -45,16 +97,17 @@ func getWebURL(url string) string {
 	return strings.Replace(strings.Replace(url, "api.github.com", "github.com", 1), "repos/", "", 1)
 }
 
-func (c *Cloner) Clone(issue *github.Issue, project string, dryRun bool) {
-	token := getToken()
-
-	tp := gojira.BearerAuthTransport{
-		Token: token,
+func Clone(issue *github.Issue, opts ...Option) error {
+	config := ClonerConfig{}
+	for _, opt := range opts {
+		if err := opt(&config); err != nil {
+			return err
+		}
 	}
 
-	jiraClient, err := gojira.NewClient(tp.Client(), "https://issues.redhat.com")
+	jiraClient, err := gojira.NewClient(config.client, config.jiraURL)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	ji := jira.Issue{
@@ -70,13 +123,13 @@ func (c *Cloner) Clone(issue *github.Issue, project string, dryRun bool) {
 				Name: "Story",
 			},
 			Project: gojira.Project{
-				Key: project,
+				Key: config.project,
 			},
 			Summary: fmt.Sprintf("[UPSTREAM] %s #%d", issue.GetTitle(), issue.GetNumber()),
 		},
 	}
 
-	if dryRun {
+	if config.dryRun {
 		fmt.Println("\n############# DRY RUN MODE #############")
 		fmt.Printf("Cloning issue #%d to jira project board: %s\n\n", issue.GetNumber(), ji.Fields.Project.Key)
 		fmt.Printf("Summary: %s\n", ji.Fields.Summary)
@@ -88,8 +141,7 @@ func (c *Cloner) Clone(issue *github.Issue, project string, dryRun bool) {
 		fmt.Printf("Cloning issue #%d to jira project board: %s\n\n", issue.GetNumber(), ji.Fields.Project.Key)
 		daIssue, _, err := jiraClient.Issue.Create(&ji)
 		if err != nil {
-			fmt.Println(err)
-			os.Exit(2)
+			return err
 		}
 
 		if daIssue != nil {
@@ -97,4 +149,6 @@ func (c *Cloner) Clone(issue *github.Issue, project string, dryRun bool) {
 				fmt.Sprintf("https://issues.redhat.com/browse/%s", daIssue.Key))
 		}
 	}
+
+	return nil
 }

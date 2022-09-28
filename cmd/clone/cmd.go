@@ -23,14 +23,13 @@ import (
 	"github.com/jmrodri/gh2jira/internal/jira"
 )
 
-var dryRun bool
-var project string
-var ghproject string
+var (
+	dryRun    bool
+	project   string
+	ghproject string
+)
 
 func NewCmd() *cobra.Command {
-	cloner := jira.Cloner{}
-	lister := gh.Lister{}
-
 	cmd := &cobra.Command{
 		Use:   "clone <ISSUE_ID> [ISSUE_ID ...]",
 		Short: "Clone given Github issues to Jira",
@@ -39,11 +38,14 @@ func NewCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			for _, id := range args {
 				issueId, _ := strconv.Atoi(id)
-				lister.Options = &gh.ListerOptions{
-					Project: ghproject,
+				issue, err := gh.GetIssue(issueId, gh.WithProject(ghproject))
+				if err != nil {
+					return err
 				}
-				issue := lister.GetIssue(issueId)
-				cloner.Clone(issue, project, dryRun)
+				err = jira.Clone(issue, jira.WithProject(project), jira.WithDryRun(dryRun))
+				if err != nil {
+					return nil
+				}
 			}
 			return nil
 		},
