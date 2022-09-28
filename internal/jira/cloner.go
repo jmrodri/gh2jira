@@ -105,6 +105,10 @@ func Clone(issue *github.Issue, opts ...Option) error {
 		}
 	}
 
+	if err := config.setDefaults(); err != nil {
+		return err
+	}
+
 	jiraClient, err := gojira.NewClient(config.client, config.jiraURL)
 	if err != nil {
 		return err
