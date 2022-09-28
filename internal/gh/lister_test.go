@@ -15,8 +15,10 @@
 package gh
 
 import (
+	"net/http"
 	"os"
 
+	"github.com/google/go-github/v47/github"
 	"github.com/migueleliasweb/go-github-mock/src/mock"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -194,10 +196,43 @@ var _ = Describe("Lister", func() {
 		//     Expect(err).To(HaveOccurred())
 		//     Expect(lister.Options).NotTo(BeNil())
 		// })
-		It("should not return an error", func() {
-			Skip("figure out how to use the mock go github library")
-			mockedHTTPClient := mock.NewMockedHTTPClient()
-			err := ListIssues(WithClient(mockedHTTPClient))
+		It("should find open issues", func() {
+			// Skip("figure out how to use the mock go github library")
+			mockedHTTPClient := mock.NewMockedHTTPClient(
+				mock.WithRequestMatch(mock.GetReposIssuesByOwnerByRepo,
+					[]github.Issue{
+						{
+							ID:    github.Int64(123),
+							Title: github.String("Issue 1"),
+							State: github.String("open"),
+						},
+						{
+							ID:    github.Int64(456),
+							Title: github.String("Issue 2"),
+							State: github.String("open"),
+						},
+					},
+				),
+			)
+			err := ListIssues(WithClient(mockedHTTPClient), WithProject("fakeorg/fakeproject"))
+			Expect(err).NotTo(HaveOccurred())
+		})
+		It("should return error if list fails", func() {
+			// if our request returns an error ListIssues should return
+			// that error
+			mockedHTTPClient := mock.NewMockedHTTPClient(
+				mock.WithRequestMatchHandler(
+					mock.GetReposIssuesByOwnerByRepo,
+					http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						mock.WriteError(
+							w,
+							http.StatusInternalServerError,
+							"github went belly up or something",
+						)
+					}),
+				),
+			)
+			err := ListIssues(WithClient(mockedHTTPClient), WithProject("fakeorg/fakeproject"))
 			Expect(err).To(HaveOccurred())
 		})
 	})
