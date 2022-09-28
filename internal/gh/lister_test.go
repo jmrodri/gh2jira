@@ -15,6 +15,7 @@
 package gh
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 
@@ -187,18 +188,7 @@ var _ = Describe("Lister", func() {
 			Expect(iss).To(BeNil())
 			Expect(err).To(HaveOccurred())
 		})
-		// It("should initialize ListerOption if not set", func() {
-		//     // force ListIssue to return early
-		//     err := os.Unsetenv("GITHUB_TOKEN")
-		//     Expect(err).NotTo(HaveOccurred())
-		//
-		//     Expect(lister.Options).To(BeNil())
-		//     err = lister.ListIssues()
-		//     Expect(err).To(HaveOccurred())
-		//     Expect(lister.Options).NotTo(BeNil())
-		// })
 		It("should find open issues", func() {
-			// Skip("figure out how to use the mock go github library")
 			mockedHTTPClient := mock.NewMockedHTTPClient(
 				mock.WithRequestMatch(mock.GetReposIssuesByOwnerByRepo,
 					[]github.Issue{
@@ -238,6 +228,13 @@ var _ = Describe("Lister", func() {
 			iss, err := ListIssues(WithClient(mockedHTTPClient), WithProject("fakeorg/fakeproject"))
 			Expect(iss).To(BeNil())
 			Expect(err).To(HaveOccurred())
+		})
+		It("should return error if Options return an error", func() {
+			_, err := ListIssues(func(c *ListerConfig) error {
+				return fmt.Errorf("do you see me")
+			})
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(Equal("do you see me"))
 		})
 	})
 })
