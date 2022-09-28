@@ -237,4 +237,50 @@ var _ = Describe("Lister", func() {
 			Expect(err.Error()).To(Equal("do you see me"))
 		})
 	})
+	Describe("GetIssue", func() {
+		var (
+			originalToken string
+		)
+		BeforeEach(func() {
+			originalToken = os.Getenv("GITHUB_TOKEN")
+			err := os.Setenv("GITHUB_TOKEN", "blah-blah-blah")
+			Expect(err).NotTo(HaveOccurred())
+		})
+		AfterEach(func() {
+			err := os.Setenv("GITHUB_TOKEN", originalToken)
+			Expect(err).NotTo(HaveOccurred())
+		})
+		It("should return an error if there is no token", func() {
+			err := os.Unsetenv("GITHUB_TOKEN")
+			Expect(err).NotTo(HaveOccurred())
+
+			iss, err := GetIssue(10)
+			Expect(iss).To(BeNil())
+			Expect(err).To(HaveOccurred())
+		})
+		It("should return error if Options return an error", func() {
+			_, err := GetIssue(10, func(c *ListerConfig) error {
+				return fmt.Errorf("do you see me")
+			})
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(Equal("do you see me"))
+		})
+		It("should find the open issue", func() {
+			mockedHTTPClient := mock.NewMockedHTTPClient(
+				mock.WithRequestMatch(mock.GetReposIssuesByOwnerByRepoByIssueNumber,
+					github.Issue{
+						ID:     github.Int64(456),
+						Title:  github.String("Issue 2"),
+						State:  github.String("open"),
+						Number: github.Int(456),
+					},
+				),
+			)
+			iss, err := GetIssue(456, WithClient(mockedHTTPClient),
+				WithProject("fakeorg/fakeproject"))
+			Expect(iss).NotTo(BeNil())
+			Expect(iss.GetNumber()).To(Equal(456))
+			Expect(err).NotTo(HaveOccurred())
+		})
+	})
 })
