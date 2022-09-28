@@ -128,16 +128,16 @@ func GetIssue(issueNum int, opts ...Option) (*github.Issue, error) {
 	return issue, nil
 }
 
-func ListIssues(opts ...Option) error {
+func ListIssues(opts ...Option) ([]*github.Issue, error) {
 	config := ListerConfig{}
 	for _, opt := range opts {
 		if err := opt(&config); err != nil {
-			return err
+			return nil, err
 		}
 	}
 
 	if err := config.setDefaults(); err != nil {
-		return err
+		return nil, err
 	}
 
 	client := github.NewClient(config.client)
@@ -157,7 +157,7 @@ func ListIssues(opts ...Option) error {
 			config.GetGithubOrg(), config.GetGithubRepo(), opt)
 
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		allIssues = append(allIssues, issues...)
@@ -167,13 +167,5 @@ func ListIssues(opts ...Option) error {
 		opt.Page = resp.NextPage
 	}
 
-	for _, issue := range allIssues {
-		if issue.IsPullRequest() {
-			// We have a PR, skipping
-			continue
-		}
-		PrintGithubIssue(issue, true, true)
-	}
-
-	return nil
+	return allIssues, nil
 }

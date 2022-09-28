@@ -33,13 +33,22 @@ func NewCmd() *cobra.Command {
 		Short: "List Github issues",
 		Long:  "List Github issues filtered by milestone, assignee, or label",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			err := gh.ListIssues(gh.WithMilestone(milestone),
+			issues, err := gh.ListIssues(gh.WithMilestone(milestone),
 				gh.WithAssignee(assignee),
 				gh.WithProject(project),
 				gh.WithLabel(label),
 			)
 			if err != nil {
 				return err
+			}
+
+			// print the issues
+			for _, issue := range issues {
+				if issue.IsPullRequest() {
+					// We have a PR, skipping
+					continue
+				}
+				gh.PrintGithubIssue(issue, true, true)
 			}
 			return nil
 		},

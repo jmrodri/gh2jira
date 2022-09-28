@@ -183,7 +183,8 @@ var _ = Describe("Lister", func() {
 			err := os.Unsetenv("GITHUB_TOKEN")
 			Expect(err).NotTo(HaveOccurred())
 
-			err = ListIssues()
+			iss, err := ListIssues()
+			Expect(iss).To(BeNil())
 			Expect(err).To(HaveOccurred())
 		})
 		// It("should initialize ListerOption if not set", func() {
@@ -214,7 +215,9 @@ var _ = Describe("Lister", func() {
 					},
 				),
 			)
-			err := ListIssues(WithClient(mockedHTTPClient), WithProject("fakeorg/fakeproject"))
+			iss, err := ListIssues(WithClient(mockedHTTPClient), WithProject("fakeorg/fakeproject"))
+			Expect(iss).NotTo(BeNil())
+			Expect(len(iss)).To(Equal(2))
 			Expect(err).NotTo(HaveOccurred())
 		})
 		It("should return error if list fails", func() {
@@ -232,7 +235,8 @@ var _ = Describe("Lister", func() {
 					}),
 				),
 			)
-			err := ListIssues(WithClient(mockedHTTPClient), WithProject("fakeorg/fakeproject"))
+			iss, err := ListIssues(WithClient(mockedHTTPClient), WithProject("fakeorg/fakeproject"))
+			Expect(iss).To(BeNil())
 			Expect(err).To(HaveOccurred())
 		})
 	})
