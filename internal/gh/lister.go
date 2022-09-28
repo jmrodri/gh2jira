@@ -62,6 +62,14 @@ func (l *ListerConfig) GetGithubRepo() string {
 	return s[1]
 }
 
+func (c *ListerConfig) getToken() (string, error) {
+	token, ok := os.LookupEnv("GITHUB_TOKEN")
+	if !ok {
+		return "", fmt.Errorf("please supply your GITHUB_TOKEN")
+	}
+	return token, nil
+}
+
 func WithClient(cl *http.Client) Option {
 	return func(c *ListerConfig) error {
 		c.client = cl
@@ -95,14 +103,6 @@ func WithLabel(l []string) Option {
 		c.Label = l
 		return nil
 	}
-}
-
-func (c *ListerConfig) getToken() (string, error) {
-	token, ok := os.LookupEnv("GITHUB_TOKEN")
-	if !ok {
-		return "", fmt.Errorf("please supply your GITHUB_TOKEN")
-	}
-	return token, nil
 }
 
 // So we will want to allow this to be able to take in a specific GH issue id or

@@ -107,6 +107,63 @@ var _ = Describe("Lister", func() {
 		})
 	})
 
+	Context("With Option methods", func() {
+		var (
+			options ListerConfig
+		)
+		BeforeEach(func() {
+			options = ListerConfig{}
+		})
+		Describe("WithClient", func() {
+			It("should set client to nil if passed nil", func() {
+				opt := WithClient(nil)
+				err := opt(&options)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(options.client).To(BeNil())
+			})
+			It("should set the client if given one", func() {
+				mc := mock.NewMockedHTTPClient()
+				opt := WithClient(mc)
+				err := opt(&options)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(options.client).To(Equal(mc))
+			})
+		})
+		Describe("WithMilestone", func() {
+			It("should set the milestone", func() {
+				opt := WithMilestone("47")
+				err := opt(&options)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(options.Milestone).To(Equal("47"))
+			})
+		})
+		Describe("WithAssignee", func() {
+			It("should set the assignee", func() {
+				opt := WithAssignee("johndoe")
+				err := opt(&options)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(options.Assignee).To(Equal("johndoe"))
+			})
+		})
+		Describe("WithProject", func() {
+			It("should set the project", func() {
+				opt := WithProject("operator-framework/operator-sdk")
+				err := opt(&options)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(options.Project).To(Equal("operator-framework/operator-sdk"))
+			})
+		})
+		Describe("WithLabel", func() {
+			It("should set the label", func() {
+				labels := []string{"kind/bug", "documentation"}
+				opt := WithLabel(labels)
+				err := opt(&options)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(options.Label).To(Equal(labels))
+			})
+		})
+	})
+
 	Describe("ListIssues", func() {
 		var (
 			originalToken string
