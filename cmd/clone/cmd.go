@@ -42,7 +42,7 @@ func NewCmd() *cobra.Command {
 				if err != nil {
 					return err
 				}
-				err = jira.Clone(issue, jira.WithProject(project), jira.WithDryRun(dryRun))
+				_, err = jira.Clone(issue, jira.WithProject(project), jira.WithDryRun(dryRun))
 				if err != nil {
 					return nil
 				}

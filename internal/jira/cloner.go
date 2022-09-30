@@ -20,7 +20,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/andygrunwald/go-jira"
 	gojira "github.com/andygrunwald/go-jira"
 	"github.com/google/go-github/v47/github"
 )
@@ -97,24 +96,24 @@ func getWebURL(url string) string {
 	return strings.Replace(strings.Replace(url, "api.github.com", "github.com", 1), "repos/", "", 1)
 }
 
-func Clone(issue *github.Issue, opts ...Option) error {
+func Clone(issue *github.Issue, opts ...Option) (*gojira.Issue, error) {
 	config := ClonerConfig{}
 	for _, opt := range opts {
 		if err := opt(&config); err != nil {
-			return err
+			return nil, err
 		}
 	}
 
 	if err := config.setDefaults(); err != nil {
-		return err
+		return nil, err
 	}
 
 	jiraClient, err := gojira.NewClient(config.client, config.jiraURL)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	ji := jira.Issue{
+	ji := gojira.Issue{
 		Fields: &gojira.IssueFields{
 			// Assignee: &gojira.User{
 			//     Name: "myuser",
@@ -133,6 +132,8 @@ func Clone(issue *github.Issue, opts ...Option) error {
 		},
 	}
 
+	var daIssue *gojira.Issue
+
 	if config.dryRun {
 		fmt.Println("\n############# DRY RUN MODE #############")
 		fmt.Printf("Cloning issue #%d to jira project board: %s\n\n", issue.GetNumber(), ji.Fields.Project.Key)
@@ -143,9 +144,10 @@ func Clone(issue *github.Issue, opts ...Option) error {
 		fmt.Println("\n############# DRY RUN MODE #############")
 	} else {
 		fmt.Printf("Cloning issue #%d to jira project board: %s\n\n", issue.GetNumber(), ji.Fields.Project.Key)
-		daIssue, _, err := jiraClient.Issue.Create(&ji)
+		var err error
+		daIssue, _, err = jiraClient.Issue.Create(&ji)
 		if err != nil {
-			return err
+			return daIssue, err
 		}
 
 		if daIssue != nil {
@@ -154,5 +156,5 @@ func Clone(issue *github.Issue, opts ...Option) error {
 		}
 	}
 
-	return nil
+	return daIssue, nil
 }
