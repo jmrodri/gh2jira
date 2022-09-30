@@ -1,3 +1,17 @@
+// Copyright © 2022 jesus m. rodriguez jmrodri@gmail.com
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package mock
 
 import (
@@ -62,45 +76,3 @@ func WithRequestMatch(
 		Responses: responses,
 	})
 }
-
-// WithRequestMatchPages honors pagination directives.
-//
-// Pages can be requested in any order and each page can be called multiple times.
-//
-// E.g.
-//
-// 		mockedHTTPClient := NewMockedHTTPClient(
-// 			WithRequestMatchPages(
-// 				GetOrgsReposByOrg,
-// 				[]github.Repository{
-// 					{
-// 						Name: github.String("repo-A-on-first-page"),
-// 					},
-// 					{
-// 						Name: github.String("repo-B-on-first-page"),
-// 					},
-// 				},
-// 				[]github.Repository{
-// 					{
-// 						Name: github.String("repo-C-on-second-page"),
-// 					},
-// 					{
-// 						Name: github.String("repo-D-on-second-page"),
-// 					},
-// 				},
-// 			),
-// 		)
-// func WithRequestMatchPages(
-//     ep EndpointPattern,
-//     pages ...interface{},
-// ) MockBackendOption {
-//     p := [][]byte{}
-//
-//     for _, r := range pages {
-//         p = append(p, MustMarshal(r))
-//     }
-//
-//     return WithRequestMatchHandler(ep, &PaginatedReponseHandler{
-//         ResponsePages: p,
-//     })
-// }

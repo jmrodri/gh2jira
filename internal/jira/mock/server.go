@@ -1,3 +1,17 @@
+// Copyright © 2022 jesus m. rodriguez jmrodri@gmail.com
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package mock
 
 import (
@@ -48,65 +62,6 @@ func (srh *FIFOReponseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 	w.Write(srh.Responses[srh.CurrentIndex])
 }
-
-// PaginatedReponseHandler handler implementation that
-// responds to the HTTP requests and honors the pagination headers
-//
-//  Header e.g: `Link: <https://api.github.com/search/code?q=addClass+user%3Amozilla&page=15>; rel="next",
-//   <https://api.github.com/search/code?q=addClass+user%3Amozilla&page=34>; rel="last",
-//   <https://api.github.com/search/code?q=addClass+user%3Amozilla&page=1>; rel="first",
-//   <https://api.github.com/search/code?q=addClass+user%3Amozilla&page=13>; rel="prev"`
-//
-// See: https://docs.github.com/en/rest/guides/traversing-with-pagination
-// type PaginatedReponseHandler struct {
-//     ResponsePages [][]byte
-// }
-
-// func (prh *PaginatedReponseHandler) getCurrentPage(r *http.Request) int {
-//     strPage := r.URL.Query().Get("page")
-//
-//     if strPage == "" {
-//         return 1
-//     }
-//
-//     page, err := strconv.Atoi(r.URL.Query().Get("page"))
-//
-//     if err == nil {
-//         return page
-//     }
-//
-//     // this should never happen as the request is being made by the SDK
-//     panic(fmt.Sprintf("invalid page: %s", strPage))
-// }
-
-// func (prh *PaginatedReponseHandler) generateLinkHeader(
-//     w http.ResponseWriter,
-//     r *http.Request,
-// ) {
-//     currentPage := prh.getCurrentPage(r)
-//     lastPage := len(prh.ResponsePages)
-//
-//     buf := bytes.NewBufferString(`<?page=1>; rel="first",`)
-//     buf.WriteString(fmt.Sprintf(`<?page=%d>; rel="last",`, lastPage))
-//
-//     if currentPage < lastPage {
-//         // when resp.NextPage == 0, it means no more pages
-//         // which is basically as not setting it in the response
-//         buf.WriteString(fmt.Sprintf(`<?page=%d>; rel="next",`, currentPage+1))
-//     }
-//
-//     if currentPage > 1 {
-//         buf.WriteString(fmt.Sprintf(`<?page=%d>; rel="prev",`, currentPage-1))
-//     }
-//
-//     w.Header().Add("Link", buf.String())
-// }
-
-// ServeHTTP implementation of `http.Handler`
-// func (prh *PaginatedReponseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-//     prh.generateLinkHeader(w, r)
-//     w.Write(prh.ResponsePages[prh.getCurrentPage(r)-1])
-// }
 
 // EnforceHostRoundTripper rewrites all requests with the given `Host`.
 type EnforceHostRoundTripper struct {
